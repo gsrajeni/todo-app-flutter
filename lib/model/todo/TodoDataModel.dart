@@ -9,11 +9,13 @@ class TodoDataModel{
   String title;
   DateTime timestamp;
   bool isDeleted;
+  int categoryId;
 
   TodoDataModel(
       {this.id,
       this.description,
       this.title,
       this.timestamp,
-      this.isDeleted});
+      this.isDeleted,
+      this.categoryId});
 }

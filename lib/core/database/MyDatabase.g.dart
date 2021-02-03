@@ -62,6 +62,8 @@ class _$MyDatabase extends MyDatabase {
 
   TodoDao _todoDaoInstance;
 
+  CategoryDao _categoryDaoInstance;
+
   Future<sqflite.Database> open(String path, List<Migration> migrations,
       [Callback callback]) async {
     final databaseOptions = sqflite.OpenDatabaseOptions(
@@ -80,7 +82,9 @@ class _$MyDatabase extends MyDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `TodoDataModel` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `description` TEXT, `title` TEXT, `timestamp` INTEGER, `isDeleted` INTEGER)');
+            'CREATE TABLE IF NOT EXISTS `TodoDataModel` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `description` TEXT, `title` TEXT, `timestamp` INTEGER, `isDeleted` INTEGER, `categoryId` INTEGER)');
+        await database.execute(
+            'CREATE TABLE IF NOT EXISTS `CategoryDataModel` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT, `color` INTEGER)');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -91,6 +95,11 @@ class _$MyDatabase extends MyDatabase {
   @override
   TodoDao get todoDao {
     return _todoDaoInstance ??= _$TodoDao(database, changeListener);
+  }
+
+  @override
+  CategoryDao get categoryDao {
+    return _categoryDaoInstance ??= _$CategoryDao(database, changeListener);
   }
 }
 
@@ -106,7 +115,22 @@ class _$TodoDao extends TodoDao {
                   'title': item.title,
                   'timestamp': _dateTimeConverter.encode(item.timestamp),
                   'isDeleted':
-                      item.isDeleted == null ? null : (item.isDeleted ? 1 : 0)
+                      item.isDeleted == null ? null : (item.isDeleted ? 1 : 0),
+                  'categoryId': item.categoryId
+                },
+            changeListener),
+        _todoDataModelUpdateAdapter = UpdateAdapter(
+            database,
+            'TodoDataModel',
+            ['id'],
+            (TodoDataModel item) => <String, dynamic>{
+                  'id': item.id,
+                  'description': item.description,
+                  'title': item.title,
+                  'timestamp': _dateTimeConverter.encode(item.timestamp),
+                  'isDeleted':
+                      item.isDeleted == null ? null : (item.isDeleted ? 1 : 0),
+                  'categoryId': item.categoryId
                 },
             changeListener),
         _todoDataModelDeletionAdapter = DeletionAdapter(
@@ -119,7 +143,8 @@ class _$TodoDao extends TodoDao {
                   'title': item.title,
                   'timestamp': _dateTimeConverter.encode(item.timestamp),
                   'isDeleted':
-                      item.isDeleted == null ? null : (item.isDeleted ? 1 : 0)
+                      item.isDeleted == null ? null : (item.isDeleted ? 1 : 0),
+                  'categoryId': item.categoryId
                 },
             changeListener);
 
@@ -130,6 +155,8 @@ class _$TodoDao extends TodoDao {
   final QueryAdapter _queryAdapter;
 
   final InsertionAdapter<TodoDataModel> _todoDataModelInsertionAdapter;
+
+  final UpdateAdapter<TodoDataModel> _todoDataModelUpdateAdapter;
 
   final DeletionAdapter<TodoDataModel> _todoDataModelDeletionAdapter;
 
@@ -144,7 +171,8 @@ class _$TodoDao extends TodoDao {
             timestamp: _dateTimeConverter.decode(row['timestamp'] as int),
             isDeleted: row['isDeleted'] == null
                 ? null
-                : (row['isDeleted'] as int) != 0));
+                : (row['isDeleted'] as int) != 0,
+            categoryId: row['categoryId'] as int));
   }
 
   @override
@@ -160,7 +188,8 @@ class _$TodoDao extends TodoDao {
             timestamp: _dateTimeConverter.decode(row['timestamp'] as int),
             isDeleted: row['isDeleted'] == null
                 ? null
-                : (row['isDeleted'] as int) != 0));
+                : (row['isDeleted'] as int) != 0,
+            categoryId: row['categoryId'] as int));
   }
 
   @override
@@ -169,10 +198,84 @@ class _$TodoDao extends TodoDao {
   }
 
   @override
+  Future<void> updateTodo(TodoDataModel todo) async {
+    await _todoDataModelUpdateAdapter.update(todo, OnConflictStrategy.abort);
+  }
+
+  @override
   Future<void> removeTodoById(TodoDataModel todo) async {
     await _todoDataModelDeletionAdapter.delete(todo);
   }
 }
 
+class _$CategoryDao extends CategoryDao {
+  _$CategoryDao(this.database, this.changeListener)
+      : _queryAdapter = QueryAdapter(database, changeListener),
+        _categoryDataModelInsertionAdapter = InsertionAdapter(
+            database,
+            'CategoryDataModel',
+            (CategoryDataModel item) => <String, dynamic>{
+                  'id': item.id,
+                  'name': item.name,
+                  'color': _colorConverter.encode(item.color)
+                },
+            changeListener),
+        _categoryDataModelDeletionAdapter = DeletionAdapter(
+            database,
+            'CategoryDataModel',
+            ['id'],
+            (CategoryDataModel item) => <String, dynamic>{
+                  'id': item.id,
+                  'name': item.name,
+                  'color': _colorConverter.encode(item.color)
+                },
+            changeListener);
+
+  final sqflite.DatabaseExecutor database;
+
+  final StreamController<String> changeListener;
+
+  final QueryAdapter _queryAdapter;
+
+  final InsertionAdapter<CategoryDataModel> _categoryDataModelInsertionAdapter;
+
+  final DeletionAdapter<CategoryDataModel> _categoryDataModelDeletionAdapter;
+
+  @override
+  Future<List<CategoryDataModel>> findAllCategory() async {
+    return _queryAdapter.queryList(
+        'SELECT * FROM CategoryDataModel ORDER BY name ASC',
+        mapper: (Map<String, dynamic> row) => CategoryDataModel(
+            id: row['id'] as int,
+            name: row['name'] as String,
+            color: _colorConverter.decode(row['color'] as int)));
+  }
+
+  @override
+  Stream<CategoryDataModel> findCategoryById(int id) {
+    return _queryAdapter.queryStream(
+        'SELECT * FROM CategoryDataModel WHERE id = ?',
+        arguments: <dynamic>[id],
+        queryableName: 'CategoryDataModel',
+        isView: false,
+        mapper: (Map<String, dynamic> row) => CategoryDataModel(
+            id: row['id'] as int,
+            name: row['name'] as String,
+            color: _colorConverter.decode(row['color'] as int)));
+  }
+
+  @override
+  Future<void> insertCategory(CategoryDataModel todo) async {
+    await _categoryDataModelInsertionAdapter.insert(
+        todo, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> removeCategory(CategoryDataModel todo) async {
+    await _categoryDataModelDeletionAdapter.delete(todo);
+  }
+}
+
 // ignore_for_file: unused_element
 final _dateTimeConverter = DateTimeConverter();
+final _colorConverter = ColorConverter();

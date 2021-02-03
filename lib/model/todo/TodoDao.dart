@@ -16,4 +16,7 @@ abstract class TodoDao {
 
   @delete
   Future<void> removeTodoById(TodoDataModel todo);
+
+  @update
+  Future<void> updateTodo(TodoDataModel todo);
 }
