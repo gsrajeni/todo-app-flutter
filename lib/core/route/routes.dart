@@ -16,7 +16,7 @@ class Routes {
       case "/addNew":
         return MaterialPageRoute(builder: (_) => AddNewPage(todoDataModel : settings.arguments));
       case "/addNew/category":
-        return MaterialPageRoute(builder: (_) => AddNewCategoryPage());
+        return MaterialPageRoute(builder: (_) => AddNewCategoryPage(postModel : settings.arguments));
       default:
         return MaterialPageRoute(
             builder: (_) => Scaffold(

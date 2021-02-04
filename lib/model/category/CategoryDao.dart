@@ -17,4 +17,7 @@ abstract class CategoryDao {
 
   @delete
   Future<void> removeCategory(CategoryDataModel todo);
+
+  @update
+  Future <void> updateCategory(CategoryDataModel postModel);
 }

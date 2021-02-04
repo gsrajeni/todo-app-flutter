@@ -37,6 +37,10 @@ dev_dependencies:
   floor_generator: ^0.18.0
   build_runner: ^1.10.3
   flutter_colorpicker: ^0.3.5
+  timelines: ^0.0.2+1
+  intl: ^0.16.1
+  flutter_calendar_carousel: ^1.5.3
+  flutter_datetime_picker: ^1.5.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

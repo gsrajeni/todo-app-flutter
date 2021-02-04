@@ -193,6 +193,23 @@ class _$TodoDao extends TodoDao {
   }
 
   @override
+  Future<List<TodoDataModel>> findAllTodosByDate(
+      int fromDate, int toDate) async {
+    return _queryAdapter.queryList(
+        'SELECT * FROM TodoDataModel WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC',
+        arguments: <dynamic>[fromDate, toDate],
+        mapper: (Map<String, dynamic> row) => TodoDataModel(
+            id: row['id'] as int,
+            description: row['description'] as String,
+            title: row['title'] as String,
+            timestamp: _dateTimeConverter.decode(row['timestamp'] as int),
+            isDeleted: row['isDeleted'] == null
+                ? null
+                : (row['isDeleted'] as int) != 0,
+            categoryId: row['categoryId'] as int));
+  }
+
+  @override
   Future<void> insertTodo(TodoDataModel todo) async {
     await _todoDataModelInsertionAdapter.insert(todo, OnConflictStrategy.abort);
   }
@@ -220,6 +237,16 @@ class _$CategoryDao extends CategoryDao {
                   'color': _colorConverter.encode(item.color)
                 },
             changeListener),
+        _categoryDataModelUpdateAdapter = UpdateAdapter(
+            database,
+            'CategoryDataModel',
+            ['id'],
+            (CategoryDataModel item) => <String, dynamic>{
+                  'id': item.id,
+                  'name': item.name,
+                  'color': _colorConverter.encode(item.color)
+                },
+            changeListener),
         _categoryDataModelDeletionAdapter = DeletionAdapter(
             database,
             'CategoryDataModel',
@@ -238,6 +265,8 @@ class _$CategoryDao extends CategoryDao {
   final QueryAdapter _queryAdapter;
 
   final InsertionAdapter<CategoryDataModel> _categoryDataModelInsertionAdapter;
+
+  final UpdateAdapter<CategoryDataModel> _categoryDataModelUpdateAdapter;
 
   final DeletionAdapter<CategoryDataModel> _categoryDataModelDeletionAdapter;
 
@@ -268,6 +297,12 @@ class _$CategoryDao extends CategoryDao {
   Future<void> insertCategory(CategoryDataModel todo) async {
     await _categoryDataModelInsertionAdapter.insert(
         todo, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> updateCategory(CategoryDataModel postModel) async {
+    await _categoryDataModelUpdateAdapter.update(
+        postModel, OnConflictStrategy.abort);
   }
 
   @override

@@ -19,4 +19,7 @@ abstract class TodoDao {
 
   @update
   Future<void> updateTodo(TodoDataModel todo);
+
+  @Query("SELECT * FROM TodoDataModel WHERE timestamp >= :fromDate AND timestamp <= :toDate ORDER BY timestamp DESC")
+  Future<List<TodoDataModel>> findAllTodosByDate(int fromDate, int toDate);
 }

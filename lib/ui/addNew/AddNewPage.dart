@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:todo/core/database/MyDatabase.dart';
 import 'package:todo/core/style/color.dart';
+import 'package:todo/core/style/styles.dart';
 import 'package:todo/core/validator/validator.dart';
 import 'package:todo/model/category/CategoryDao.dart';
 import 'package:todo/model/category/CategoryDataModel.dart';
 import 'package:todo/model/todo/TodoDao.dart';
 import 'package:todo/model/todo/TodoDataModel.dart';
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
+import 'package:intl/intl.dart';
 
 class AddNewPage extends StatefulWidget {
-  TodoDataModel todoDataModel = TodoDataModel();
+  TodoDataModel todoDataModel;
   CategoryDataModel selected;
-
   AddNewPage({this.todoDataModel});
 
   @override
@@ -22,14 +24,48 @@ class _AddNewPageState extends State<AddNewPage> {
   GlobalKey<FormState> _key = GlobalKey<FormState>();
 
   @override
-  Widget build(BuildContext context) {
-    if (widget.todoDataModel == null) widget.todoDataModel = TodoDataModel();
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    if (widget.todoDataModel == null)
+      widget.todoDataModel = TodoDataModel(timestamp: DateTime.now());
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    if(widget.todoDataModel == null) widget.todoDataModel = TodoDataModel(timestamp: DateTime.now());
     return Scaffold(
       appBar: AppBar(
-        title: Hero(
-            tag: "add new",
-            child: Material(color: Colors.transparent, child: Text("Add New"))),
+        title: StatefulBuilder(
+          builder:(context, myState)=> Row(
+            children: [
+              Expanded(
+                  child: Hero(
+                    tag: "add new",
+                    child: Text(
+                DateFormat("dd MMM, yyyy hh:mm a")
+                      .format(widget.todoDataModel.timestamp),
+                style: Theme.of(context).textTheme.caption,
+              ),
+                  )),
+              Expanded(
+                  child: FlatButton.icon(
+                      onPressed: () {
+                        DatePicker.showDateTimePicker(context,
+                            showTitleActions: true,
+                            onChanged: (date) {
+                          myState(() {
+                            widget.todoDataModel.timestamp = date;
+                          });
+                        }, onConfirm: (date) {
+                          print('confirm $date');
+                        }, currentTime: DateTime.now());
+                      },
+                      icon: Icon(Icons.access_time),
+                      label: Text("change")))
+            ],
+          ),
+        ),
         actions: [
           IconButton(
               icon: Icon(
@@ -44,12 +80,11 @@ class _AddNewPageState extends State<AddNewPage> {
                       .build();
                   TodoDao todoDao = database.todoDao;
                   widget.todoDataModel.isDeleted = false;
-                  widget.todoDataModel.timestamp = DateTime.now();
                   if (widget.todoDataModel.id == null)
                     await todoDao.insertTodo(widget.todoDataModel);
                   else
                     await todoDao.updateTodo(widget.todoDataModel);
-                  Navigator.pop(context);
+                  Navigator.of(context).pop(widget.todoDataModel);
                 }
               })
         ],
@@ -96,6 +131,7 @@ class _AddNewPageState extends State<AddNewPage> {
                       return Text("Loading Category");
                     else if (snapshot.hasData) {
                       return DropdownButtonFormField(
+                          onTap: () => FocusScope.of(context).unfocus(),
                           value: widget.selected,
                           onSaved: (CategoryDataModel element) =>
                               widget.todoDataModel?.categoryId = element.id,
@@ -173,14 +209,28 @@ class _AddNewPageState extends State<AddNewPage> {
                         Icons.delete,
                         color: MyColor.warningRedColor,
                       ),
-                      onPressed: () async{
-                        final database =
-                            await $FloorMyDatabase.databaseBuilder('app_database.db').build();
+                      onPressed: () async {
+                        final database = await $FloorMyDatabase
+                            .databaseBuilder('app_database.db')
+                            .build();
                         CategoryDao categoryDao = database.categoryDao;
                         categoryDao.removeCategory(element);
-                        setState(() {
-                        });
-                      })
+                        setState(() {});
+                      }),
+                  IconButton(
+                      icon: Icon(
+                        Icons.edit,
+                        color: Colors.green,
+                      ),
+                      onPressed: () async {
+                        var result = await Navigator.pushNamed(
+                            context, "/addNew/category",
+                            arguments: element);
+                        if (result != null)
+                          setState(() {
+                            element = result;
+                          });
+                      }),
                 ],
               ),
             ),

@@ -10,9 +10,12 @@ class AddNewCategoryPage extends StatelessWidget {
   GlobalKey<FormState> _key = GlobalKey<FormState>();
   // create some values
   Color pickerColor = Color(0xff443a49);
-  CategoryDataModel postModel = CategoryDataModel(color: Color(0xff443a49));
+  CategoryDataModel postModel;
+  AddNewCategoryPage({this.postModel});
   @override
   Widget build(BuildContext context) {
+    if(postModel == null)
+    postModel = CategoryDataModel(color: Color(0xff443a49));
     return Scaffold(
       appBar: AppBar(
         title: Hero(tag: "add category", child: Material(color:Colors.transparent,child: Text("Add Category"))),
@@ -29,8 +32,11 @@ class AddNewCategoryPage extends StatelessWidget {
                     .databaseBuilder('app_database.db')
                     .build();
                 CategoryDao categoryDao = database.categoryDao;
+                if(postModel.id == null)
                 await categoryDao.insertCategory(postModel);
-                Navigator.pop(context);
+                else
+                  await categoryDao.updateCategory(postModel);
+                Navigator.of(context).pop(postModel);
               }
             })
       ],
@@ -43,6 +49,7 @@ class AddNewCategoryPage extends StatelessWidget {
             child: Column(
               children: [
                 TextFormField(
+                  initialValue: postModel?.name ?? "",
                   validator: Validator.validateText,
                   onSaved: (value) => postModel.name = value,
                   decoration: InputDecoration(
@@ -55,7 +62,7 @@ class AddNewCategoryPage extends StatelessWidget {
                 ),
                 Text("Select a color for your category!"),
                 ColorPicker(
-                  pickerColor: pickerColor,
+                  pickerColor: postModel?.color?? pickerColor,
                   displayThumbColor: false,
                   paletteType: PaletteType.hsv,
                   onColorChanged:(color)=> postModel.color = color,
