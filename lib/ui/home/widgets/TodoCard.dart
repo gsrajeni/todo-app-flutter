@@ -42,12 +42,13 @@ class _TodoCardState extends State<TodoCard> {
           ),
         ),
         child: FutureBuilder(
-          initialData: Colors.blue,
+          initialData: Colors.white,
           future: _getColor(widget.data.categoryId),
           builder: (context, AsyncSnapshot<Color> myColor) {
             Color color = Colors.blue;
             if (myColor.hasData) color = myColor.data;
             return Card(
+              color: myColor.data.withOpacity(0.1),
               elevation: 0,
               child: ExpansionTile(
                 expandedAlignment: Alignment.centerLeft,

@@ -55,6 +55,7 @@ class _HomeBodyState extends State<HomeBody> {
               indicatorPositionBuilder: (d, p) => .5,
               contentsBuilder: (context, index) {
                 return TodoCard(widget.dataList[index],
+
                         (TodoDataModel data) {
                       widget.dataList.remove(data);
                       myState(() {
